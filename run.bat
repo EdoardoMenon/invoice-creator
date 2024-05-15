@@ -1,19 +1,18 @@
 @echo off
 
-echo Attempting to set PowerShell execution policy to allow script execution. Administrator privileges required...
-PowerShell -Command "Start-Process PowerShell -ArgumentList '-ExecutionPolicy Bypass -Command Set-ExecutionPolicy RemoteSigned -Scope CurrentUser' -Verb RunAs"
+set PYTHON_EXE=C:\Users\"Edoardo Menon"\AppData\Local\Programs\Python\Python312\python.exe
 
 echo Creating virtual environment...
-python -m venv venv
+%PYTHON_EXE% -m venv venv
 
 echo Activating virtual environment...
 call venv\Scripts\activate
 
 echo Installing dependencies from requirements.txt...
-python -m pip install -r requirements.txt
+%PYTHON_EXE% -m pip install -r requirements.txt
 
 echo Running main.py...
-python main.py
+%PYTHON_EXE% main.py
 
 echo Press any key to exit.
 pause > nul

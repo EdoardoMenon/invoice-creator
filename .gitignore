@@ -1,5 +1,6 @@
 *.xlsx
 *.pdf
+*Invoices
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

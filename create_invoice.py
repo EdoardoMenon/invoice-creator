@@ -24,7 +24,7 @@ def create_new_invoice():
 
         last_invoice_sheet = sorted(invoice_sheets, key=lambda s: int(s.name.split(' ')[-1]))[-1]
         last_invoice_sheet.api.Copy(After=sheets[-1].api)
-        new_sheet = sheets[-1]  # New sheet is now the last sheet
+        new_sheet = sheets[-1]
         new_sheet_num = int(last_invoice_sheet.name.split(' ')[-1]) + 1
         new_sheet_name = f"Invoice {new_sheet_num}"
         new_sheet.name = new_sheet_name
@@ -32,7 +32,8 @@ def create_new_invoice():
         sydney_timezone = pytz.timezone('Australia/Sydney')
         today = datetime.now(sydney_timezone)
         current_year = today.year
-        today_formatted = today.strftime("%d-%m-%Y")
+        today_formatted = today.strftime("%d/%m/%Y")
+        new_sheet.range('C9').number_format = '@'
         new_sheet.range('C9').value = today_formatted
         new_sheet.range('C10').value = new_sheet_num
 
@@ -40,11 +41,24 @@ def create_new_invoice():
         if days is None or num_days is None:
             return False
 
+        print()
         update_excel(new_sheet, days)
         print(f"New sheet created: {new_sheet.name}")
-        pdf_path = os.path.join(os.getcwd(), f"MRZDesigns - {new_sheet_name}.pdf")
+
+        invoice_folder = os.path.join(os.getcwd(), 'Invoices')
+        if not os.path.exists(invoice_folder):
+            os.makedirs(invoice_folder)
+
+        pdf_name = f"MRZDesigns - {new_sheet_name}.pdf"
+        pdf_path = os.path.join(invoice_folder, pdf_name)
+
+        if os.path.exists(pdf_path):
+            new_pdf_name = pdf_name.replace(".pdf", " - Overwritten.pdf")
+            os.rename(pdf_path, os.path.join(invoice_folder, new_pdf_name))
+            print(f"An Existing PDF was found and was renamed to: {new_pdf_name}")
+
         new_sheet.api.ExportAsFixedFormat(0, pdf_path)
-        print("\nSubject: MRZDesigns - Invoice " + str(new_sheet_num) + " - " + str(num_days) + " days")
+        print(f"New PDF saved to: {pdf_path}")
 
         workbook.save()
         return True
@@ -74,8 +88,8 @@ def input_details(current_year):
                 day, month = day_month_input[:2], day_month_input[2:]
             day = f"{int(day):02d}" 
             month = f"{int(month):02d}"
-            date_str = f"{day}-{month}-{current_year}"
-            datetime.strptime(date_str, "%d-%m-%Y")
+            date_str = f"{day}/{month}/{current_year}"
+            datetime.strptime(date_str, "%d/%m/%Y")
             days.append((date_str, hours_worked))
         except ValueError as ve:
             print(f"Error: {ve}. Please try again.")
@@ -86,7 +100,6 @@ def input_details(current_year):
 def update_excel(sheet, days):
     start_row = 16
 
-    # Clear previous data in the specified ranges before entering new data
     ranges_to_clear = ['B16:B20', 'C16:C20', 'D16:D20', 'E16:E20']
     for range_str in ranges_to_clear:
         sheet.range(range_str).clear_contents()
@@ -94,10 +107,10 @@ def update_excel(sheet, days):
     work_type = os.getenv('WORK_TYPE')
     rate = os.getenv('RATE')
 
-    # Populate the new data into the sheet
     for index, (date, hours) in enumerate(days):
         row = start_row + index
-        sheet.range(f'B{row}').value = date 
+        sheet.range(f'B{row}').number_format = '@'
+        sheet.range(f'B{row}').value = date
         sheet.range(f'C{row}').value = work_type
-        sheet.range(f'D{row}').value = hours 
+        sheet.range(f'D{row}').value = hours
         sheet.range(f'E{row}').value = rate
