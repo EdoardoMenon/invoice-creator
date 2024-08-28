@@ -1,6 +1,6 @@
 import os
 import xlwings as xw
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import pytz
 
@@ -68,6 +68,7 @@ def create_new_invoice():
 
 def input_details(current_year):
     num_days = input("How many days did you work? (Up to 5): ")
+    default_hours_worked = os.getenv('DEFAULT_HOURS_WORKED', '7.5')
     try:
         num_days = int(num_days)
         if not 1 <= num_days <= 5:
@@ -77,23 +78,38 @@ def input_details(current_year):
         print(ve)
         return None, None
 
-    days = []
+    dates = []
+    current_date = None
     for i in range(num_days):
-        day_month_input = input(f"Enter date for day {i+1} (DD-MM): ")
-        hours_worked = input(f"Enter hours worked on day {i+1}: ")
-        try:
-            if '-' in day_month_input:
-                day, month = day_month_input.split('-')
+        while True:
+            if i == 0 or current_date is None:
+                day_month_input = input(f"Enter date for day {i+1} (DD-MM): ")
             else:
-                day, month = day_month_input[:2], day_month_input[2:]
-            day = f"{int(day):02d}" 
-            month = f"{int(month):02d}"
-            date_str = f"{day}/{month}/{current_year}"
-            datetime.strptime(date_str, "%d/%m/%Y")
-            days.append((date_str, hours_worked))
-        except ValueError as ve:
-            print(f"Error: {ve}. Please try again.")
-            return None, None
+                next_date = current_date + timedelta(days=1)
+                day_month_input = input(f"Enter date for day {i+1} (DD-MM or press Enter to use {next_date.strftime('%d-%m')}): ")
+                if day_month_input == "":
+                    current_date = next_date
+                    dates.append(current_date.strftime("%d/%m/%Y"))
+                    break
+
+            try:
+                if '-' in day_month_input:
+                    day, month = day_month_input.split('-')
+                else:
+                    day, month = day_month_input[:2], day_month_input[2:]
+                day = int(day)
+                month = int(month)
+                current_date = datetime(current_year, month, day)
+                dates.append(current_date.strftime("%d/%m/%Y"))
+                break
+            except ValueError as ve:
+                print(f"Error: {ve}. Please try again.")
+
+    days = []
+    for date in dates:
+        hours_input = input(f"Enter hours worked on {date[:5]} (Enter for {default_hours_worked}): ")
+        hours_worked = hours_input if hours_input else default_hours_worked
+        days.append((date, hours_worked))
 
     return num_days, days
 
