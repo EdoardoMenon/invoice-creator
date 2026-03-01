@@ -14,6 +14,21 @@ def get_next_invoice_number(sheets):
     return max(int(s.name.split(' ')[-1]) for s in invoice_sheets) + 1
 
 
+def get_next_customer_invoice_number(workbook, new_sheet, customer_id):
+    max_num = 0
+    for sheet in workbook.sheets:
+        if sheet.name == new_sheet.name or not sheet.name.startswith('Invoice '):
+            continue
+        if sheet.range('C11').value == customer_id:
+            cust_inv_num = sheet.range('C12').value
+            if cust_inv_num is not None:
+                try:
+                    max_num = max(max_num, int(cust_inv_num))
+                except (ValueError, TypeError):
+                    pass
+    return max_num + 1
+
+
 def create_new_invoice():
     print("\nWhat type of invoice is this for?")
     print("1. Architecture work")
@@ -58,6 +73,10 @@ def create_new_invoice():
         new_sheet.range('C9').number_format = '@'
         new_sheet.range('C9').value = today_formatted
         new_sheet.range('C10').value = new_invoice_num
+
+        customer_id = new_sheet.range('C11').value
+        customer_invoice_num = get_next_customer_invoice_number(workbook, new_sheet, customer_id)
+        new_sheet.range('C12').value = customer_invoice_num
 
         if is_architecture:
             success = fill_architecture_invoice(new_sheet, today.year)
