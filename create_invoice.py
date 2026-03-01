@@ -89,11 +89,11 @@ def create_new_invoice():
 
         print(f"New sheet created: {new_sheet.name}")
 
-        invoice_folder = os.path.join(os.getcwd(), 'Invoices')
+        invoice_folder = os.path.join(os.getcwd(), 'Invoices', f'Customer ID - {int(customer_id)}')
         if not os.path.exists(invoice_folder):
             os.makedirs(invoice_folder)
 
-        pdf_name = f"IL BUILDING GROUP - {new_sheet.name}.pdf"
+        pdf_name = f"IL BUILDING GROUP - Customer Invoice {customer_invoice_num}.pdf"
         pdf_path = os.path.join(invoice_folder, pdf_name)
 
         if os.path.exists(pdf_path):
